@@ -1,14 +1,11 @@
 package deque;
 
-import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.StdRandom;
 import org.junit.Test;
 
-import java.util.LinkedList;
-
 import static org.junit.Assert.*;
 
-public class ArrayDequeTest {
+public class CrossTest {
     @Test
     public void  Test(){
         ArrayDeque<Integer> MyList1 = new ArrayDeque<>();
