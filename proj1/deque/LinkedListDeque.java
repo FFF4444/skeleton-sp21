@@ -5,14 +5,14 @@ import java.util.Iterator;
 public class LinkedListDeque<T> implements Iterable<T>, Deque<T> {
 
     private class Node {
-        public T item = null;
-        public Node prev = this;
-        public Node next = this;
+        private T item = null;
+        private Node prev = this;
+        private Node next = this;
 
-        public Node() {
+        Node() {
         }
 
-        public Node(T item, Node prev, Node next) {
+        Node(T item, Node prev, Node next) {
             this.item = item;
             this.prev = prev;
             this.next = next;
@@ -24,17 +24,17 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T> {
 
     @Override
     public void addFirst(T item) {
-        Node Object = new Node(item, head, head.next);
-        head.next.prev = Object;
-        head.next = Object;
+        Node object = new Node(item, head, head.next);
+        head.next.prev = object;
+        head.next = object;
         size++;
     }
 
     @Override
     public void addLast(T item) {
-        Node Object = new Node(item, head.prev, head);
-        head.prev.next = Object;
-        head.prev = Object;
+        Node object = new Node(item, head.prev, head);
+        head.prev.next = object;
+        head.prev = object;
         size++;
     }
 
@@ -86,7 +86,11 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T> {
             return null;
         } else {
             Node cur = head.next;
-            for (int i = 0; i < index; i++, cur = cur.next) { };
+            int i = 0;
+            while (i < index) {
+                i++;
+                cur = cur.next;
+            }
             return cur.item;
         }
     }
@@ -105,7 +109,7 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T> {
         return getHelper(index - 1, cur.next);
     }
 
-    private class seer implements Iterator<T> {
+    private class Seer implements Iterator<T> {
 
         private Node cur = head.next;
 
@@ -125,7 +129,7 @@ public class LinkedListDeque<T> implements Iterable<T>, Deque<T> {
 
     @Override
     public Iterator<T> iterator() {
-        return new seer();
+        return new Seer();
     }
 
     public boolean equals(Object o) {

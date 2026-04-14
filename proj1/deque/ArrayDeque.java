@@ -109,7 +109,7 @@ public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
         return array[(head + index) % array.length];
     }
 
-    private class seer implements Iterator<T> {
+    private class Seer implements Iterator<T> {
 
         int cur = head, count = 0;
         @Override
@@ -128,7 +128,7 @@ public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
 
     @Override
     public Iterator<T> iterator() {
-        return new seer();
+        return new Seer();
     }
 
     public boolean equals(Object o) {
