@@ -2,15 +2,15 @@ package deque;
 
 import java.util.Iterator;
 
-public class ArrayDeque<T> implements Iterable<T>,Deque<T>{
+public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
 
     private T[] array = (T[]) new Object[8];
     private int size = 0, head, tail;
 
-    private void resize(int newSize){
+    private void resize(int newSize) {
         T[] newArray = (T[]) new Object[newSize];
         int j = 0, i;
-        for(i = head; j < size; j++, i = (i + 1) % array.length){
+        for (i = head; j < size; j++, i = (i + 1) % array.length){
             newArray[j] = array[i];
         }
         array = newArray;
@@ -20,17 +20,17 @@ public class ArrayDeque<T> implements Iterable<T>,Deque<T>{
 
     @Override
     public void addFirst(T item) {
-        if(size == array.length){
+        if (size == array.length) {
             resize(size * 2);
         }
         size++;
-        if(size == 1){
+        if (size == 1) {
             array[0] = item;
             head = tail =0;
             return;
         }
         head--;
-        if(head == -1){
+        if (head == -1) {
             head = array.length - 1;
         }
         array[head] = item;
@@ -38,11 +38,11 @@ public class ArrayDeque<T> implements Iterable<T>,Deque<T>{
 
     @Override
     public void addLast(T item) {
-        if(size == array.length){
+        if (size == array.length) {
             resize(size * 2);
         }
         size++;
-        if(size == 1){
+        if (size == 1) {
             array[0] = item;
             head = tail =0;
             return;
@@ -64,8 +64,8 @@ public class ArrayDeque<T> implements Iterable<T>,Deque<T>{
     @Override
     public void printDeque() {
         int j = 0, i;
-        for(i = head; j < size; j++, i = (i + 1) % array.length){
-            if(j == size - 1) {
+        for (i = head; j < size; j++, i = (i + 1) % array.length) {
+            if (j == size - 1) {
                 System.out.println(array[i]);
             }else {
                 System.out.print(array[i] + " ");
@@ -75,10 +75,10 @@ public class ArrayDeque<T> implements Iterable<T>,Deque<T>{
 
     @Override
     public T removeFirst() {
-        if(size == 0) {
+        if (size == 0) {
             return null;
         }
-        if(size - 1 < array.length / 4){
+        if (size - 1 < array.length / 4) {
             resize(size);
         }
         T pop = array[head];
@@ -89,15 +89,15 @@ public class ArrayDeque<T> implements Iterable<T>,Deque<T>{
 
     @Override
     public T removeLast() {
-        if(size == 0) {
+        if (size == 0) {
             return null;
         }
-        if(size - 1 < array.length / 4){
+        if (size - 1 < array.length / 4) {
             resize(size);
         }
         T pop = array[tail];
         tail--;
-        if(tail == -1){
+        if (tail == -1) {
             tail = array.length - 1;
         }
         size--;
@@ -106,13 +106,13 @@ public class ArrayDeque<T> implements Iterable<T>,Deque<T>{
 
     @Override
     public T get(int index) {
-        if(index < 0 || index >= size) {
+        if (index < 0 || index >= size) {
             return null;
         }
         return array[(head + index) % array.length];
     }
 
-    private class seer implements Iterator<T>{
+    private class seer implements Iterator<T> {
 
         int cur = head, count = 0;
         @Override
@@ -132,5 +132,29 @@ public class ArrayDeque<T> implements Iterable<T>,Deque<T>{
     @Override
     public Iterator<T> iterator() {
         return new seer();
+    }
+
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Deque)) {
+            return false;
+        }
+        Deque<?> other = (Deque<?>) o;
+        if (this.size() != other.size()) {
+            return false;
+        }
+        for (int i = 0; i < size(); i++) {
+            T myItem = this.get(i);
+            Object otherItem = other.get(i);
+            if (myItem == null && otherItem != null) {
+                return false;
+            }
+            if (myItem != null && !myItem.equals(otherItem)) {
+                return false;
+            }
+        }
+        return true;
     }
 }

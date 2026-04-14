@@ -2,17 +2,17 @@ package deque;
 
 import java.util.Iterator;
 
-public class LinkedListDeque<T> implements Iterable<T>,Deque<T>{
+public class LinkedListDeque<T> implements Iterable<T>,Deque<T> {
 
-    private class Node{
+    private class Node {
         public T item = null;
         public Node prev = this;
         public Node next = this;
 
-        public Node(){
+        public Node() {
         }
 
-        public Node(T item,Node prev,Node next){
+        public Node(T item,Node prev,Node next) {
             this.item = item;
             this.prev = prev;
             this.next = next;
@@ -23,7 +23,7 @@ public class LinkedListDeque<T> implements Iterable<T>,Deque<T>{
     private final Node head = new Node();
 
     @Override
-    public void addFirst(T item){
+    public void addFirst(T item) {
         Node Object = new Node(item,head,head.next);
         head.next.prev = Object;
         head.next = Object;
@@ -31,7 +31,7 @@ public class LinkedListDeque<T> implements Iterable<T>,Deque<T>{
     }
 
     @Override
-    public void addLast(T item){
+    public void addLast(T item) {
         Node Object = new Node(item,head.prev,head);
         head.prev.next=Object;
         head.prev=Object;
@@ -51,10 +51,10 @@ public class LinkedListDeque<T> implements Iterable<T>,Deque<T>{
     @Override
     public void printDeque() {
         Node cur = head.next;
-        for(int i = 0; i < size; i++, cur=cur.next){
+        for (int i = 0; i < size; i++, cur = cur.next) {
             if (i == size - 1) {
                 System.out.println(cur.item);
-            }else{
+            }else {
                 System.out.print(cur.item + " ");
             }
         }
@@ -62,11 +62,11 @@ public class LinkedListDeque<T> implements Iterable<T>,Deque<T>{
 
     @Override
     public T removeFirst() {
-        if(size == 0){
+        if (size == 0) {
             return null;
         }
         Node pop = head.next;
-        head.next =head.next.next;
+        head.next = head.next.next;
         head.next.prev = head;
         size--;
         return pop.item;
@@ -74,7 +74,7 @@ public class LinkedListDeque<T> implements Iterable<T>,Deque<T>{
 
     @Override
     public T removeLast() {
-        if(size == 0){
+        if (size == 0) {
             return null;
         }
         Node pop = head.prev;
@@ -88,15 +88,28 @@ public class LinkedListDeque<T> implements Iterable<T>,Deque<T>{
     public T get(int index) {
         if (index < 0 || index > size - 1) {
             return null;
-        }else{
+        }else {
             Node cur = head.next;
-            for(int i = 0; i < index; i++, cur = cur.next){
+            for (int i = 0; i < index; i++, cur = cur.next) {
             }
             return cur.item;
         }
     }
 
-    private class seer implements Iterator<T>{
+    public T getRecursive(int index) {
+        if (index < 0 || index >= size){
+            return  null;
+        }
+        return getHelper(index, head.next);
+    }
+
+    private T getHelper(int index, Node cur) {
+        if (index == 0) {
+            return cur.item;
+        }
+        return getHelper(index - 1, cur.next);
+    }
+    private class seer implements Iterator<T> {
 
         private Node cur = head.next;
 
@@ -114,8 +127,32 @@ public class LinkedListDeque<T> implements Iterable<T>,Deque<T>{
 
     }
     @Override
-    public Iterator<T> iterator(){
+    public Iterator<T> iterator() {
         return new seer();
+    }
+
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Deque)) {
+            return false;
+        }
+        Deque<?> other = (Deque<?>) o;
+        if (this.size() != other.size()) {
+            return false;
+        }
+        for (int i = 0; i < size(); i++) {
+            T myItem = this.get(i);
+            Object otherItem = other.get(i);
+            if (myItem == null && otherItem != null) {
+                return false;
+            }
+            if (myItem != null && !myItem.equals(otherItem)) {
+                return false;
+            }
+        }
+        return true;
     }
 
 }
