@@ -23,10 +23,10 @@ public class GuitarString {
         //       cast the result of this division operation into an int. For
         //       better accuracy, use the Math.round() function before casting.
         //       Your should initially fill your buffer array with zeros.
-        int capacity = (int)Math.round(SR / frequency);
+        int capacity = (int) Math.round(SR / frequency);
         buffer = new ArrayDeque<Double>();
-        for (int i = 0; i <capacity; i++) {
-            buffer.addLast((double)0);
+        for (int i = 0; i < capacity; i++) {
+            buffer.addLast((double) 0);
         }
     }
 
@@ -41,7 +41,7 @@ public class GuitarString {
         //       other. This does not mean that you need to check that the numbers
         //       are different from each other. It means you should repeatedly call
         //       Math.random() - 0.5 to generate new random numbers for each array index.
-        Deque<Double> result = new ArrayDeque<Double> ();
+        Deque<Double> result = new ArrayDeque<Double>();
         for (int i = 0; i < buffer.size(); i++) {
             result.addLast(Math.random() - 0.5);
         }

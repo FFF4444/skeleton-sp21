@@ -10,7 +10,7 @@ public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
     private void resize(int newSize) {
         T[] newArray = (T[]) new Object[newSize];
         int j = 0, i;
-        for (i = head; j < size; j++, i = (i + 1) % array.length){
+        for (i = head; j < size; j++, i = (i + 1) % array.length) {
             newArray[j] = array[i];
         }
         array = newArray;
@@ -26,7 +26,8 @@ public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
         size++;
         if (size == 1) {
             array[0] = item;
-            head = tail =0;
+            head = 0;
+            tail = 0;
             return;
         }
         head--;
@@ -44,16 +45,12 @@ public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
         size++;
         if (size == 1) {
             array[0] = item;
-            head = tail =0;
+            head = 0;
+            tail = 0;
             return;
         }
         tail = (tail + 1) % array.length;
         array[tail] = item;
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return size == 0;
     }
 
     @Override
@@ -67,7 +64,7 @@ public class ArrayDeque<T> implements Iterable<T>, Deque<T> {
         for (i = head; j < size; j++, i = (i + 1) % array.length) {
             if (j == size - 1) {
                 System.out.println(array[i]);
-            }else {
+            }  else {
                 System.out.print(array[i] + " ");
             }
         }

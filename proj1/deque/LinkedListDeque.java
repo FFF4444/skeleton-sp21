@@ -2,7 +2,7 @@ package deque;
 
 import java.util.Iterator;
 
-public class LinkedListDeque<T> implements Iterable<T>,Deque<T> {
+public class LinkedListDeque<T> implements Iterable<T>, Deque<T> {
 
     private class Node {
         public T item = null;
@@ -12,7 +12,7 @@ public class LinkedListDeque<T> implements Iterable<T>,Deque<T> {
         public Node() {
         }
 
-        public Node(T item,Node prev,Node next) {
+        public Node(T item, Node prev, Node next) {
             this.item = item;
             this.prev = prev;
             this.next = next;
@@ -24,7 +24,7 @@ public class LinkedListDeque<T> implements Iterable<T>,Deque<T> {
 
     @Override
     public void addFirst(T item) {
-        Node Object = new Node(item,head,head.next);
+        Node Object = new Node(item, head, head.next);
         head.next.prev = Object;
         head.next = Object;
         size++;
@@ -32,16 +32,12 @@ public class LinkedListDeque<T> implements Iterable<T>,Deque<T> {
 
     @Override
     public void addLast(T item) {
-        Node Object = new Node(item,head.prev,head);
-        head.prev.next=Object;
-        head.prev=Object;
+        Node Object = new Node(item, head.prev, head);
+        head.prev.next = Object;
+        head.prev = Object;
         size++;
     }
 
-    @Override
-    public boolean isEmpty() {
-        return size == 0;
-    }
 
     @Override
     public int size() {
@@ -54,7 +50,7 @@ public class LinkedListDeque<T> implements Iterable<T>,Deque<T> {
         for (int i = 0; i < size; i++, cur = cur.next) {
             if (i == size - 1) {
                 System.out.println(cur.item);
-            }else {
+            } else {
                 System.out.print(cur.item + " ");
             }
         }
@@ -88,17 +84,16 @@ public class LinkedListDeque<T> implements Iterable<T>,Deque<T> {
     public T get(int index) {
         if (index < 0 || index > size - 1) {
             return null;
-        }else {
+        } else {
             Node cur = head.next;
-            for (int i = 0; i < index; i++, cur = cur.next) {
-            }
+            for (int i = 0; i < index; i++, cur = cur.next) { };
             return cur.item;
         }
     }
 
     public T getRecursive(int index) {
-        if (index < 0 || index >= size){
-            return  null;
+        if (index < 0 || index >= size) {
+            return null;
         }
         return getHelper(index, head.next);
     }
@@ -109,6 +104,7 @@ public class LinkedListDeque<T> implements Iterable<T>,Deque<T> {
         }
         return getHelper(index - 1, cur.next);
     }
+
     private class seer implements Iterator<T> {
 
         private Node cur = head.next;
@@ -126,6 +122,7 @@ public class LinkedListDeque<T> implements Iterable<T>,Deque<T> {
         }
 
     }
+
     @Override
     public Iterator<T> iterator() {
         return new seer();
