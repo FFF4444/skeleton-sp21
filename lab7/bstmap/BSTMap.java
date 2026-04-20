@@ -82,11 +82,11 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
     }
 
     @Override
-    public Set keySet() {
+    public Set<K> keySet() {
         return setHelper(root);
     }
 
-    public Set setHelper(BSTNode root) {
+    private Set<K> setHelper(BSTNode root) {
         HashSet<K> result = new HashSet<>();
         if (root == null) {
             return result;
@@ -149,8 +149,8 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
     }
 
     @Override
-    public Iterator iterator() {
-        return new iter();
+    public Iterator<K> iterator() {
+        return new iter<>();
     }
     private class iter<K> implements Iterator<K> {
         private Iterator list;
@@ -176,5 +176,15 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
         public K next() {
             return (K) list.next();
         }
+    }
+    public void printInOrder() {
+        printInOrder(root);
+    }
+
+    private void printInOrder(BSTNode node) {
+        if (node == null) return;
+        printInOrder(node.left);
+        System.out.print(node.key + " ");
+        printInOrder(node.right);
     }
 }
