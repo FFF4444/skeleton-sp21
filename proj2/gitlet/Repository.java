@@ -109,10 +109,10 @@ public class Repository {
             return;
         }
         Commit cur;
-        if(secBranch == null) {
+        if (secBranch == null) {
             cur = new Commit(message, getCurCommit(curBranch).getHash());
         } else {
-            cur = new Commit(message, getCurCommit(curBranch).getHash(),getCurCommit(secBranch).getHash());
+            cur = new Commit(message, getCurCommit(curBranch).getHash(), getCurCommit(secBranch).getHash());
         }
         cur.add(add);
         cur.rm(rm);
@@ -346,7 +346,8 @@ public class Repository {
             System.out.println("No commit with that id exists.");
             System.exit(0);
         }
-        resetHelper(Commit.readCommit(readContentsAsString(join(HEADS, curBranch))), Commit.readCommit(Commit.commitExist(id)));
+        resetHelper(Commit.readCommit(readContentsAsString(join(HEADS, curBranch))),
+                Commit.readCommit(Commit.commitExist(id)));
         writeContents(join(HEADS, curBranch), Commit.commitExist(id));
     }
     public static void validateNumArgs(String[] args, int n) {
@@ -411,19 +412,23 @@ public class Repository {
                     toDelete.add(i);
                 }
             } else if (cur.getBlob().containsKey(i) && tar.getBlob().containsKey(i)) {
-                String result = "<<<<<<< HEAD\n" + readContentsAsString(join(BLOBS, cur.getBlob().get(i))) + "=======\n" + readContentsAsString(join(BLOBS, tar.getBlob().get(i))) + ">>>>>>>\n";
+                String result = "<<<<<<< HEAD\n" + readContentsAsString(join(BLOBS, cur.getBlob().get(i))) + "=======\n"
+                        + readContentsAsString(join(BLOBS, tar.getBlob().get(i))) + ">>>>>>>\n";
                 conflict.put(i, result);
             } else if (!cur.getBlob().containsKey(i) && tar.getBlob().containsKey(i)) {
-                String result = "<<<<<<< HEAD\n" + "=======\n"+ readContentsAsString(join(BLOBS, tar.getBlob().get(i))) + ">>>>>>>\n";
+                String result = "<<<<<<< HEAD\n" + "=======\n" + readContentsAsString(join(BLOBS, tar.getBlob().get(i)))
+                        + ">>>>>>>\n";
                 conflict.put(i, result);
             } else if (cur.getBlob().containsKey(i) && !tar.getBlob().containsKey(i)) {
-                String result = "<<<<<<< HEAD\n" + readContentsAsString(join(BLOBS, cur.getBlob().get(i))) + "=======\n" + ">>>>>>>\n";
+                String result = "<<<<<<< HEAD\n" + readContentsAsString(join(BLOBS, cur.getBlob().get(i))) + "=======\n"
+                        + ">>>>>>>\n";
                 conflict.put(i, result);
             }
         }
         for (String i : cur.getBlob().keySet()) {
             if (!spiltPoint.getBlob().containsKey(i) && tar.getBlob().containsKey(i) && !cur.getBlob().get(i).equals(tar.getBlob().get(i))) {
-                String result = "<<<<<<< HEAD\n" + readContentsAsString(join(BLOBS, cur.getBlob().get(i))) + "=======\n" + readContentsAsString(join(BLOBS, tar.getBlob().get(i))) + ">>>>>>>\n";
+                String result = "<<<<<<< HEAD\n" + readContentsAsString(join(BLOBS, cur.getBlob().get(i))) + "=======\n"
+                        + readContentsAsString(join(BLOBS, tar.getBlob().get(i))) + ">>>>>>>\n";
                 conflict.put(i, result);
             }
         }
@@ -432,7 +437,8 @@ public class Repository {
                 if (!cur.getBlob().containsKey(i)) {
                     toWrite.put(i, tar.getBlob().get(i));
                 } else if (!cur.getBlob().get(i).equals(tar.getBlob().get(i))) {
-                    String result = "<<<<<<< HEAD\n" + readContentsAsString(join(BLOBS, cur.getBlob().get(i))) + "=======\n" + readContentsAsString(join(BLOBS, tar.getBlob().get(i))) + ">>>>>>>\n";
+                    String result = "<<<<<<< HEAD\n" + readContentsAsString(join(BLOBS, cur.getBlob().get(i)))
+                            + "=======\n" + readContentsAsString(join(BLOBS, tar.getBlob().get(i))) + ">>>>>>>\n";
                     conflict.put(i, result);
                 }
             }
@@ -456,7 +462,7 @@ public class Repository {
             writeContents(join(CWD, i), conflict.get(i));
             addCommand(curBranch, i);
         }
-        commitCommand("Merged " + target +" into " + curBranch, curBranch, target);
+        commitCommand("Merged " + target + " into " + curBranch, curBranch, target);
 
     }
 }
