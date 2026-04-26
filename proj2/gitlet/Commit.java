@@ -1,22 +1,18 @@
 package gitlet;
 
-// TODO: any imports you need here
 import static gitlet.Utils.*;
 import java.io.File;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.*;
-// TODO: You'll likely use this in this class
 
 /** Represents a gitlet commit object.
- *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
- *  @author TODO
+ *  @author
  */
 public class Commit implements Serializable {
     /**
-     * TODO: add instance variables here.
      *
      * List all instance variables of the Commit class here with a useful
      * comment above them describing what that variable represents and how that
@@ -30,7 +26,6 @@ public class Commit implements Serializable {
     private String secPrev = null;
     private TreeMap<String, String> blob;
 
-    /* TODO: fill in the rest of this class. */
 
     public Commit() {
         message = "initial commit";
@@ -44,8 +39,18 @@ public class Commit implements Serializable {
         TreeMap<String, String> prevTree = readCommit(prev).getBlob();
         blob = new TreeMap<>(prevTree);
     }
+    public Commit(String message, String prev, String scePrev) {
+        this.message = message;
+        timeStamp = new Date();
+        this.prev = prev;
+        this.secPrev = scePrev;
+        blob = new TreeMap<>(readCommit(prev).getBlob());
+    }
 
     public static Commit readCommit(String hash) {
+        if (hash == null) {
+            return null;
+        }
         File c = join(Repository.COMMITS, hash);
         if (c.exists()) {
             return readObject(c, Commit.class);
@@ -55,7 +60,7 @@ public class Commit implements Serializable {
 
     public static String commitExist(String hash) {
         List<String> commits = Utils.plainFilenamesIn(Repository.COMMITS);
-        for(String i : commits) {
+        for (String i : commits) {
             if (i.startsWith(hash)) {
                 return i;
             }
@@ -85,7 +90,7 @@ public class Commit implements Serializable {
     public void printCommit() {
         System.out.println("===");
         System.out.println("commit " + this.getHash());
-        if(secPrev != null) {
+        if (secPrev != null) {
             System.out.println("Merge: " + prev.substring(0, 7) + " " + secPrev.substring(0, 7));
         }
         SimpleDateFormat dateFormat = new SimpleDateFormat("E MMM dd HH:mm:ss yyyy Z");

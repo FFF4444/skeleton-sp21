@@ -1,24 +1,18 @@
 package gitlet;
 
-import edu.princeton.cs.algs4.ST;
-
 import java.io.File;
 import java.io.Serializable;
 import java.util.*;
 
 import static gitlet.Utils.*;
 
-// TODO: any imports you need here
-
 /** Represents a gitlet repository.
- *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
- *  @author TODO
+ *  @author
  */
 public class Repository {
     /**
-     * TODO: add instance variables here.
      *
      * List all instance variables of the Repository class here with a useful
      * comment above them describing what that variable represents and how that
@@ -33,15 +27,13 @@ public class Repository {
      * The .gitlet directory.
      */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
-
-    /* TODO: fill in the rest of this class. */
     public static final File COMMITS = join(GITLET_DIR, "commits");
     public static final File HEADS = join(GITLET_DIR, "heads");
     public static final File BLOBS = join(GITLET_DIR, "blobs");
     public static final File STAGE = join(GITLET_DIR, "stage");
     public static final File ADD = join(STAGE, "add");
     public static final File RM = join(STAGE, "remove");
-    public static final File CURBRANCH = Utils.join(Repository.HEADS, "curBranch");
+    public static final File CURBRANCH = join(Repository.HEADS, "curBranch");
 
     private static void setUp() {
         GITLET_DIR.mkdir();
@@ -51,23 +43,23 @@ public class Repository {
         STAGE.mkdir();
         TreeMap<String, String> add = new TreeMap<>();
         TreeSet<String> rm = new TreeSet<>();
-        Utils.writeObject(ADD, add);
-        Utils.writeObject(RM, rm);
+        writeObject(ADD, add);
+        writeObject(RM, rm);
     }
 
     public static void initCommand() {
         Commit c = new Commit();
-        File i = Utils.join(Repository.COMMITS, c.getHash());
+        File i = join(Repository.COMMITS, c.getHash());
         if (new File(".gitlet").exists()) {
             System.out.print("A Gitlet version-control system already exists in the current directory.");
         } else {
             Repository.setUp();
-            Utils.writeObject(i, c);
+            writeObject(i, c);
             String head = c.getHash();
             String curBranch = "master";
-            File h = Utils.join(Repository.HEADS, curBranch);
-            Utils.writeContents(CURBRANCH, curBranch);
-            Utils.writeContents(h, head);
+            File h = join(Repository.HEADS, curBranch);
+            writeContents(CURBRANCH, curBranch);
+            writeContents(h, head);
         }
     }
 
@@ -77,7 +69,7 @@ public class Repository {
             return;
         }
         Commit curCommit = getCurCommit(curBranch);
-        byte[] file = Utils.readContents(join(CWD, name));
+        byte[] file = readContents(join(CWD, name));
         @SuppressWarnings("unchecked")
         TreeMap<String, String> add = readObject(ADD, TreeMap.class);
         @SuppressWarnings("unchecked")
@@ -86,24 +78,24 @@ public class Repository {
         if (curCommit.fileExist(name, file)) {
             add.remove(name);
         } else {
-            add.put(name, Utils.sha1(serialize(file)));
+            add.put(name, sha1(serialize(file)));
         }
-        Utils.writeObject(ADD, add);
-        Utils.writeObject(RM, rm);
+        writeObject(ADD, add);
+        writeObject(RM, rm);
         addBlobs(file);
     }
 
     public static Commit getCurCommit(String curBranch) {
-        File ch = Utils.join(HEADS, curBranch);
-        return Commit.readCommit(Utils.readContentsAsString(ch));
+        File ch = join(HEADS, curBranch);
+        return Commit.readCommit(readContentsAsString(ch));
     }
 
     public static void addBlobs(Serializable file) {
-        String hash = Utils.sha1(serialize(file));
-        Utils.writeContents(join(BLOBS, hash), file);
+        String hash = sha1(serialize(file));
+        writeContents(join(BLOBS, hash), file);
     }
 
-    public static void commitCommand(String message, String curBranch) {
+    public static void commitCommand(String message, String curBranch, String secBranch) {
         if (message.isBlank()) {
             System.out.println("Please enter a commit message.");
             return;
@@ -116,18 +108,21 @@ public class Repository {
             System.out.println("No changes added to the commit.");
             return;
         }
-        String curHead = readContentsAsString(join(HEADS, curBranch));
-        Commit prev = getCurCommit(curBranch);
-        Commit cur = new Commit(message, Utils.sha1(serialize(prev)));
+        Commit cur;
+        if(secBranch == null) {
+            cur = new Commit(message, getCurCommit(curBranch).getHash());
+        } else {
+            cur = new Commit(message, getCurCommit(curBranch).getHash(),getCurCommit(secBranch).getHash());
+        }
         cur.add(add);
         cur.rm(rm);
         add.clear();
         rm.clear();
-        Utils.writeObject(ADD, add);
-        Utils.writeObject(RM, rm);
-        File target = Utils.join(COMMITS, cur.getHash());
-        Utils.writeObject(target, cur);
-        Utils.writeContents(Utils.join(HEADS, curBranch), cur.getHash());
+        writeObject(ADD, add);
+        writeObject(RM, rm);
+        File target = join(COMMITS, cur.getHash());
+        writeObject(target, cur);
+        writeContents(join(HEADS, curBranch), cur.getHash());
     }
 
     public static void rmCommand(String name, String curBranch) {
@@ -142,27 +137,26 @@ public class Repository {
         TreeSet<String> rm = readObject(RM, TreeSet.class);
         if (cur.getBlob().containsKey(name)) {
             rm.add(name);
-            Utils.writeObject(RM, rm);
-            Utils.restrictedDelete(join(CWD, name));
+            writeObject(RM, rm);
+            restrictedDelete(join(CWD, name));
         }
         if (add.containsKey(name)) {
             add.remove(name);
-            Utils.writeObject(ADD, add);
+            writeObject(ADD, add);
 
         }
     }
 
     public static void logCommand(String curBranch) {
         Commit cur = getCurCommit(curBranch);
-        while (cur.prev() != null) {
+        while (cur != null) {
             cur.printCommit();
             cur = Commit.readCommit(cur.prev());
         }
-        cur.printCommit();
     }
 
-    public static void glo_logCommand() {
-        List<String> commits = Utils.plainFilenamesIn(COMMITS);
+    public static void globallogCommand() {
+        List<String> commits = plainFilenamesIn(COMMITS);
         for (String c : commits) {
             Commit cur = Commit.readCommit(c);
             cur.printCommit();
@@ -170,7 +164,7 @@ public class Repository {
     }
 
     public static void findCommand(String message) {
-        List<String> commits = Utils.plainFilenamesIn(COMMITS);
+        List<String> commits = plainFilenamesIn(COMMITS);
         boolean flag = false;
         for (String c : commits) {
             Commit cur = Commit.readCommit(c);
@@ -186,12 +180,12 @@ public class Repository {
     }
 
     public static void statusCommand(String curBranch) {
-        List<String> branches = Utils.plainFilenamesIn(HEADS);
-        List<String> cwd = Utils.plainFilenamesIn(CWD);
+        List<String> branches = plainFilenamesIn(HEADS);
+        List<String> cwd = plainFilenamesIn(CWD);
         Commit c = getCurCommit(curBranch);
         TreeMap<String, String> blobs = c.getBlob();
         @SuppressWarnings("unchecked")
-        TreeMap<String, String> add = Utils.readObject(ADD, TreeMap.class);
+        TreeMap<String, String> add = readObject(ADD, TreeMap.class);
         @SuppressWarnings("unchecked")
         TreeSet<String> rm = readObject(RM, TreeSet.class);
         System.out.println("=== Branches ===");
@@ -214,7 +208,7 @@ public class Repository {
         TreeMap<String, String> modifications = new TreeMap<>();
         TreeSet<String> untracked = new TreeSet<>();
         for (String i : cwd) {
-            byte[] file = Utils.readContents(join(CWD, i));
+            byte[] file = readContents(join(CWD, i));
             if (add.containsKey(i)) {
                 if (!add.get(i).equals(sha1(serialize(file)))) {
                     modifications.put(i, " (modified)");
@@ -252,29 +246,29 @@ public class Repository {
         TreeMap<String, String> blobs = c.getBlob();
         if (blobs.containsKey(name)) {
             File target = join(BLOBS, blobs.get(name));
-            byte[] file = Utils.readContents(target);
-            Utils.writeContents(join(CWD, name), file);
+            byte[] file = readContents(target);
+            writeContents(join(CWD, name), file);
         } else {
             System.out.println("File does not exist in that commit.");
             System.exit(0);
         }
     }
 
-    public static void checkoutCommand_file(String name, String curBranch) {
+    public static void checkoutCommandFile(String name, String curBranch) {
         Commit c = getCurCommit(curBranch);
         checkoutHelper(name, c);
     }
 
     public static void checkoutCommand(String commitID, String name) {
-        String ID = Commit.commitExist(commitID);
-        if (ID != null) {
-            checkoutHelper(name, Commit.readCommit(ID));
+        String totalID = Commit.commitExist(commitID);
+        if (totalID != null) {
+            checkoutHelper(name, Commit.readCommit(totalID));
         } else {
             System.out.println("No commit with that id exists.");
         }
     }
 
-    public static void checkoutCommand_branch(String branch, String curBranch) {
+    public static void checkoutCommandBranch(String branch, String curBranch) {
         File b = join(HEADS, branch);
         if (!b.exists()) {
             System.out.println("No such branch exists.");
@@ -284,7 +278,7 @@ public class Repository {
             System.exit(0);
         }
         resetHelper(getCurCommit(curBranch), getCurCommit(branch));
-        Utils.writeContents(CURBRANCH, branch);
+        writeContents(CURBRANCH, branch);
     }
 
     private static void resetHelper(Commit cur, Commit target) {
@@ -293,14 +287,14 @@ public class Repository {
         for (String i : tarBlobs.keySet()) {
             File f = join(CWD, i);
             if (f.exists() && (!curBlobs.containsKey(i) || !getHash(f).equals(curBlobs.get(i)))) {
-                System.out.println("1.There is an untracked file in the way; delete it, or add and commit it first.");
+                System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
                 System.exit(0);
             }
         }
         for (String i : curBlobs.keySet()) {
             File f = join(CWD, i);
             if (!tarBlobs.containsKey(i) && !curBlobs.get(i).equals(getHash(f))) {
-                System.out.println("2.There is an untracked file in the way; delete it, or add and commit it first.");
+                System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
                 System.exit(0);
             }
         }
@@ -318,8 +312,8 @@ public class Repository {
         }
         TreeMap<String, String> add = new TreeMap<>();
         TreeSet<String> rm = new TreeSet<>();
-        Utils.writeObject(ADD, add);
-        Utils.writeObject(RM, rm);
+        writeObject(ADD, add);
+        writeObject(RM, rm);
     }
     private static String getHash(File f) {
         if (f.exists()) {
@@ -347,15 +341,122 @@ public class Repository {
         }
         f.delete();
     }
-    public static void resetCommand(String ID, String curBranch) {
-        if (Commit.commitExist(ID) == null) {
+    public static void resetCommand(String id, String curBranch) {
+        if (Commit.commitExist(id) == null) {
             System.out.println("No commit with that id exists.");
             System.exit(0);
         }
-        resetHelper(Commit.readCommit(readContentsAsString(join(HEADS, curBranch))),Commit.readCommit(Commit.commitExist(ID)));
-        writeContents(join(HEADS, curBranch), Commit.commitExist(ID));
+        resetHelper(Commit.readCommit(readContentsAsString(join(HEADS, curBranch))), Commit.readCommit(Commit.commitExist(id)));
+        writeContents(join(HEADS, curBranch), Commit.commitExist(id));
+    }
+    public static void validateNumArgs(String[] args, int n) {
+        if (args.length != n) {
+            System.out.println("Incorrect operands.");
+            System.exit(0);
+        }
+    }
+    public static void initCheck(String[] args) {
+        if (!args[0].equals("init") && !(new File(".gitlet").exists())) {
+            System.out.println("Not in an initialized Gitlet directory.");
+            System.exit(0);
+        }
     }
 
+    public static void check(String[] args, int n) {
+        initCheck(args);
+        validateNumArgs(args, n);
+    }
+    public static void mergeCommand(String target, String curBranch) {
+        if (!readObject(ADD, TreeMap.class).isEmpty() || !readObject(RM, TreeSet.class).isEmpty()) {
+            System.out.println("You have uncommitted changes.");
+            System.exit(0);
+        }
+        if (!join(HEADS, target).exists()) {
+            System.out.println("A branch with that name does not exist.");
+            System.exit(0);
+        }
+        if (target.equals(curBranch)) {
+            System.out.println("Cannot merge a branch with itself.");
+            System.exit(0);
+        }
+        TreeMap<String, String> toWrite = new TreeMap<>();
+        TreeSet<String> toDelete = new TreeSet<>();
+        TreeMap<String, String> conflict = new TreeMap<>();
+        Commit spiltPoint = getCurCommit(target);
+        Commit tar = getCurCommit(target);
+        Commit cur = getCurCommit(curBranch);
+        TreeSet<String> t = new TreeSet<>();
+        while (spiltPoint != null) {
+            t.add(spiltPoint.getHash());
+            spiltPoint = Commit.readCommit(spiltPoint.prev());
+        }
+        spiltPoint = getCurCommit(curBranch);
+        while (!t.contains(spiltPoint.getHash())) {
+            spiltPoint = Commit.readCommit(spiltPoint.prev());
+        }
+        if (spiltPoint.getHash().equals(tar.getHash())) {
+            System.out.println("Given branch is an ancestor of the current branch.");
+            return;
+        }
+        if (spiltPoint.getHash().equals(cur.getHash())) {
+            checkoutCommandBranch(target, curBranch);
+            System.out.println("Current branch fast-forwarded.");
+            return;
+        }
+        for (String i : spiltPoint.getBlob().keySet()) {
+            if (spiltPoint.getBlob().get(i).equals(cur.getBlob().get(i))) {
+                if (tar.getBlob().containsKey(i)) {
+                    toWrite.put(i, tar.getBlob().get(i));
+                } else {
+                    toDelete.add(i);
+                }
+            } else if (cur.getBlob().containsKey(i) && tar.getBlob().containsKey(i)) {
+                String result = "<<<<<<< HEAD\n" + readContentsAsString(join(BLOBS, cur.getBlob().get(i))) + "=======\n" + readContentsAsString(join(BLOBS, tar.getBlob().get(i))) + ">>>>>>>\n";
+                conflict.put(i, result);
+            } else if (!cur.getBlob().containsKey(i) && tar.getBlob().containsKey(i)) {
+                String result = "<<<<<<< HEAD\n" + "=======\n"+ readContentsAsString(join(BLOBS, tar.getBlob().get(i))) + ">>>>>>>\n";
+                conflict.put(i, result);
+            } else if (cur.getBlob().containsKey(i) && !tar.getBlob().containsKey(i)) {
+                String result = "<<<<<<< HEAD\n" + readContentsAsString(join(BLOBS, cur.getBlob().get(i))) + "=======\n" + ">>>>>>>\n";
+                conflict.put(i, result);
+            }
+        }
+        for (String i : cur.getBlob().keySet()) {
+            if (!spiltPoint.getBlob().containsKey(i) && tar.getBlob().containsKey(i) && !cur.getBlob().get(i).equals(tar.getBlob().get(i))) {
+                String result = "<<<<<<< HEAD\n" + readContentsAsString(join(BLOBS, cur.getBlob().get(i))) + "=======\n" + readContentsAsString(join(BLOBS, tar.getBlob().get(i))) + ">>>>>>>\n";
+                conflict.put(i, result);
+            }
+        }
+        for (String i : tar.getBlob().keySet()) {
+            if (!spiltPoint.getBlob().containsKey(i)) {
+                if (!cur.getBlob().containsKey(i)) {
+                    toWrite.put(i, tar.getBlob().get(i));
+                } else if (!cur.getBlob().get(i).equals(tar.getBlob().get(i))) {
+                    String result = "<<<<<<< HEAD\n" + readContentsAsString(join(BLOBS, cur.getBlob().get(i))) + "=======\n" + readContentsAsString(join(BLOBS, tar.getBlob().get(i))) + ">>>>>>>\n";
+                    conflict.put(i, result);
+                }
+            }
+        }
+        for (String i : plainFilenamesIn(CWD)) {
+            if (!cur.fileExist(i, readContents(join(CWD, i)))) {
+                if (toWrite.containsKey(i) || toDelete.contains(i) || conflict.containsKey(i)) {
+                    System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                    System.exit(0);
+                }
+            }
+        }
+        for (String i : toWrite.keySet()) {
+            writeContents(join(CWD, i), readContents(join(BLOBS, toWrite.get(i))));
+            addCommand(curBranch, i);
+        }
+        for (String i : toDelete) {
+            rmCommand(i, curBranch);
+        }
+        for (String i : conflict.keySet()) {
+            writeContents(join(CWD, i), conflict.get(i));
+            addCommand(curBranch, i);
+        }
+        commitCommand("Merged " + target +" into " + curBranch, curBranch, target);
 
+    }
 }
-
