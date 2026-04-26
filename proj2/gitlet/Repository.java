@@ -51,7 +51,8 @@ public class Repository {
         Commit c = new Commit();
         File i = join(Repository.COMMITS, c.getHash());
         if (new File(".gitlet").exists()) {
-            System.out.print("A Gitlet version-control system already exists in the current directory.");
+            System.out.print("A Gitlet version-control system already "
+                    + "exists in the current directory.");
         } else {
             Repository.setUp();
             writeObject(i, c);
@@ -112,7 +113,8 @@ public class Repository {
         if (secBranch == null) {
             cur = new Commit(message, getCurCommit(curBranch).getHash());
         } else {
-            cur = new Commit(message, getCurCommit(curBranch).getHash(), getCurCommit(secBranch).getHash());
+            cur = new Commit(message,
+                    getCurCommit(curBranch).getHash(), getCurCommit(secBranch).getHash());
         }
         cur.add(add);
         cur.rm(rm);
@@ -287,14 +289,16 @@ public class Repository {
         for (String i : tarBlobs.keySet()) {
             File f = join(CWD, i);
             if (f.exists() && (!curBlobs.containsKey(i) || !getHash(f).equals(curBlobs.get(i)))) {
-                System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                System.out.println("There is an untracked file in the way"
+                        + "; delete it, or add and commit it first.");
                 System.exit(0);
             }
         }
         for (String i : curBlobs.keySet()) {
             File f = join(CWD, i);
             if (!tarBlobs.containsKey(i) && !curBlobs.get(i).equals(getHash(f))) {
-                System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                System.out.println("There is an untracked file"
+                        + " in the way; delete it, or add and commit it first.");
                 System.exit(0);
             }
         }
@@ -368,33 +372,13 @@ public class Repository {
         validateNumArgs(args, n);
     }
     public static void mergeCommand(String target, String curBranch) {
-        if (!readObject(ADD, TreeMap.class).isEmpty() || !readObject(RM, TreeSet.class).isEmpty()) {
-            System.out.println("You have uncommitted changes.");
-            System.exit(0);
-        }
-        if (!join(HEADS, target).exists()) {
-            System.out.println("A branch with that name does not exist.");
-            System.exit(0);
-        }
-        if (target.equals(curBranch)) {
-            System.out.println("Cannot merge a branch with itself.");
-            System.exit(0);
-        }
+        mergeCheck(target, curBranch);
         TreeMap<String, String> toWrite = new TreeMap<>();
         TreeSet<String> toDelete = new TreeSet<>();
         TreeMap<String, String> conflict = new TreeMap<>();
-        Commit spiltPoint = getCurCommit(target);
+        Commit spiltPoint = searchSplitPoint(target, curBranch);
         Commit tar = getCurCommit(target);
         Commit cur = getCurCommit(curBranch);
-        TreeSet<String> t = new TreeSet<>();
-        while (spiltPoint != null) {
-            t.add(spiltPoint.getHash());
-            spiltPoint = Commit.readCommit(spiltPoint.prev());
-        }
-        spiltPoint = getCurCommit(curBranch);
-        while (!t.contains(spiltPoint.getHash())) {
-            spiltPoint = Commit.readCommit(spiltPoint.prev());
-        }
         if (spiltPoint.getHash().equals(tar.getHash())) {
             System.out.println("Given branch is an ancestor of the current branch.");
             return;
@@ -411,24 +395,28 @@ public class Repository {
                 } else {
                     toDelete.add(i);
                 }
-            } else if (cur.getBlob().containsKey(i) && tar.getBlob().containsKey(i)) {
-                String result = "<<<<<<< HEAD\n" + readContentsAsString(join(BLOBS, cur.getBlob().get(i))) + "=======\n"
-                        + readContentsAsString(join(BLOBS, tar.getBlob().get(i))) + ">>>>>>>\n";
-                conflict.put(i, result);
-            } else if (!cur.getBlob().containsKey(i) && tar.getBlob().containsKey(i)) {
-                String result = "<<<<<<< HEAD\n" + "=======\n" + readContentsAsString(join(BLOBS, tar.getBlob().get(i)))
-                        + ">>>>>>>\n";
-                conflict.put(i, result);
-            } else if (cur.getBlob().containsKey(i) && !tar.getBlob().containsKey(i)) {
-                String result = "<<<<<<< HEAD\n" + readContentsAsString(join(BLOBS, cur.getBlob().get(i))) + "=======\n"
-                        + ">>>>>>>\n";
-                conflict.put(i, result);
+            } else if (!spiltPoint.getBlob().get(i).equals(tar.getBlob().get(i))) {
+                if (cur.getBlob().containsKey(i) && tar.getBlob().containsKey(i)) {
+                    String result = "<<<<<<< HEAD\n" + readContentsAsString(join(BLOBS, cur.getBlob().get(i)))
+                            + "=======\n" + readContentsAsString(join(BLOBS, tar.getBlob().get(i))) + ">>>>>>>\n";
+                    conflict.put(i, result);
+                } else if (!cur.getBlob().containsKey(i) && tar.getBlob().containsKey(i)) {
+                    String result = "<<<<<<< HEAD\n" + "=======\n"
+                            + readContentsAsString(join(BLOBS, tar.getBlob().get(i))) + ">>>>>>>\n";
+                    conflict.put(i, result);
+                } else if (cur.getBlob().containsKey(i) && !tar.getBlob().containsKey(i)) {
+                    String result = "<<<<<<< HEAD\n"
+                            + readContentsAsString(join(BLOBS, cur.getBlob().get(i)))
+                            + "=======\n" + ">>>>>>>\n";
+                    conflict.put(i, result);
+                }
             }
         }
         for (String i : cur.getBlob().keySet()) {
-            if (!spiltPoint.getBlob().containsKey(i) && tar.getBlob().containsKey(i) && !cur.getBlob().get(i).equals(tar.getBlob().get(i))) {
-                String result = "<<<<<<< HEAD\n" + readContentsAsString(join(BLOBS, cur.getBlob().get(i))) + "=======\n"
-                        + readContentsAsString(join(BLOBS, tar.getBlob().get(i))) + ">>>>>>>\n";
+            if (!spiltPoint.getBlob().containsKey(i) && tar.getBlob().containsKey(i)
+                    && !cur.getBlob().get(i).equals(tar.getBlob().get(i))) {
+                String result = "<<<<<<< HEAD\n" + readContentsAsString(join(BLOBS, cur.getBlob().get(i)))
+                        + "=======\n" + readContentsAsString(join(BLOBS, tar.getBlob().get(i))) + ">>>>>>>\n";
                 conflict.put(i, result);
             }
         }
@@ -437,8 +425,9 @@ public class Repository {
                 if (!cur.getBlob().containsKey(i)) {
                     toWrite.put(i, tar.getBlob().get(i));
                 } else if (!cur.getBlob().get(i).equals(tar.getBlob().get(i))) {
-                    String result = "<<<<<<< HEAD\n" + readContentsAsString(join(BLOBS, cur.getBlob().get(i)))
-                            + "=======\n" + readContentsAsString(join(BLOBS, tar.getBlob().get(i))) + ">>>>>>>\n";
+                    String result = "<<<<<<< HEAD\n"
+                            + readContentsAsString(join(BLOBS, cur.getBlob().get(i))) + "=======\n"
+                            + readContentsAsString(join(BLOBS, tar.getBlob().get(i))) + ">>>>>>>\n";
                     conflict.put(i, result);
                 }
             }
@@ -446,11 +435,47 @@ public class Repository {
         for (String i : plainFilenamesIn(CWD)) {
             if (!cur.fileExist(i, readContents(join(CWD, i)))) {
                 if (toWrite.containsKey(i) || toDelete.contains(i) || conflict.containsKey(i)) {
-                    System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                    System.out.println("There is an untracked file in the way;"
+                            + " delete it, or add and commit it first.");
                     System.exit(0);
                 }
             }
         }
+        mergeHelper(toWrite, toDelete, conflict, curBranch);
+        commitCommand("Merged " + target + " into " + curBranch, curBranch, target);
+    }
+    private static void mergeCheck(String target, String curBranch) {
+        if (!readObject(ADD, TreeMap.class).isEmpty() || !readObject(RM, TreeSet.class).isEmpty()) {
+            System.out.println("You have uncommitted changes.");
+            System.exit(0);
+        }
+        if (!join(HEADS, target).exists()) {
+            System.out.println("A branch with that name does not exist.");
+            System.exit(0);
+        }
+        if (target.equals(curBranch)) {
+            System.out.println("Cannot merge a branch with itself.");
+            System.exit(0);
+        }
+
+    }
+    private static Commit searchSplitPoint(String target, String curBranch) {
+        Commit spiltPoint = getCurCommit(target);
+        Commit tar = getCurCommit(target);
+        Commit cur = getCurCommit(curBranch);
+        TreeSet<String> t = new TreeSet<>();
+        while (spiltPoint != null) {
+            t.add(spiltPoint.getHash());
+            spiltPoint = Commit.readCommit(spiltPoint.prev());
+        }
+        spiltPoint = getCurCommit(curBranch);
+        while (!t.contains(spiltPoint.getHash())) {
+            spiltPoint = Commit.readCommit(spiltPoint.prev());
+        }
+        return spiltPoint;
+    }
+    private static void mergeHelper(TreeMap<String, String> toWrite, TreeSet<String> toDelete
+            , TreeMap<String, String> conflict, String curBranch) {
         for (String i : toWrite.keySet()) {
             writeContents(join(CWD, i), readContents(join(BLOBS, toWrite.get(i))));
             addCommand(curBranch, i);
@@ -462,7 +487,8 @@ public class Repository {
             writeContents(join(CWD, i), conflict.get(i));
             addCommand(curBranch, i);
         }
-        commitCommand("Merged " + target + " into " + curBranch, curBranch, target);
-
+        if (!conflict.isEmpty()) {
+            System.out.println("Encountered a merge conflict.");
+        }
     }
 }
