@@ -396,18 +396,16 @@ public class Repository {
                     toDelete.add(i);
                 }
             } else if (!spiltPoint.getBlob().get(i).equals(tar.getBlob().get(i))) {
+                String curStr = readContentsAsString(join(BLOBS, cur.getBlob().get(i)));
+                String tarStr = readContentsAsString(join(BLOBS, tar.getBlob().get(i)));
                 if (cur.getBlob().containsKey(i) && tar.getBlob().containsKey(i)) {
-                    String result = "<<<<<<< HEAD\n" + readContentsAsString(join(BLOBS, cur.getBlob().get(i)))
-                            + "=======\n" + readContentsAsString(join(BLOBS, tar.getBlob().get(i))) + ">>>>>>>\n";
+                    String result = "<<<<<<< HEAD\n" + curStr + "=======\n" + tarStr + ">>>>>>>\n";
                     conflict.put(i, result);
                 } else if (!cur.getBlob().containsKey(i) && tar.getBlob().containsKey(i)) {
-                    String result = "<<<<<<< HEAD\n" + "=======\n"
-                            + readContentsAsString(join(BLOBS, tar.getBlob().get(i))) + ">>>>>>>\n";
+                    String result = "<<<<<<< HEAD\n" + "=======\n" + tarStr + ">>>>>>>\n";
                     conflict.put(i, result);
                 } else if (cur.getBlob().containsKey(i) && !tar.getBlob().containsKey(i)) {
-                    String result = "<<<<<<< HEAD\n"
-                            + readContentsAsString(join(BLOBS, cur.getBlob().get(i)))
-                            + "=======\n" + ">>>>>>>\n";
+                    String result = "<<<<<<< HEAD\n" + curStr + "=======\n" + ">>>>>>>\n";
                     conflict.put(i, result);
                 }
             }
@@ -415,8 +413,10 @@ public class Repository {
         for (String i : cur.getBlob().keySet()) {
             if (!spiltPoint.getBlob().containsKey(i) && tar.getBlob().containsKey(i)
                     && !cur.getBlob().get(i).equals(tar.getBlob().get(i))) {
-                String result = "<<<<<<< HEAD\n" + readContentsAsString(join(BLOBS, cur.getBlob().get(i)))
-                        + "=======\n" + readContentsAsString(join(BLOBS, tar.getBlob().get(i))) + ">>>>>>>\n";
+                String result = "<<<<<<< HEAD\n" + readContentsAsString(
+                        join(BLOBS, cur.getBlob().get(i)))
+                        + "=======\n" + readContentsAsString(join(BLOBS, tar.getBlob().get(i)))
+                        + ">>>>>>>\n";
                 conflict.put(i, result);
             }
         }
@@ -442,7 +442,8 @@ public class Repository {
             }
         }
         mergeHelper(toWrite, toDelete, conflict, curBranch);
-        commitCommand("Merged " + target + " into " + curBranch, curBranch, target);
+        commitCommand("Merged " + target + " into " + curBranch
+                + ".", curBranch, target);
     }
     private static void mergeCheck(String target, String curBranch) {
         if (!readObject(ADD, TreeMap.class).isEmpty() || !readObject(RM, TreeSet.class).isEmpty()) {
@@ -460,22 +461,37 @@ public class Repository {
 
     }
     private static Commit searchSplitPoint(String target, String curBranch) {
-        Commit spiltPoint = getCurCommit(target);
+        Queue<Commit> visited = new ArrayDeque<>();
         Commit tar = getCurCommit(target);
         Commit cur = getCurCommit(curBranch);
-        TreeSet<String> t = new TreeSet<>();
-        while (spiltPoint != null) {
-            t.add(spiltPoint.getHash());
-            spiltPoint = Commit.readCommit(spiltPoint.prev());
+        TreeSet<String> allCurPrev = new TreeSet<>();
+        TreeSet<String> tarPrev = new TreeSet<>();
+        visited.add(cur);
+        while (!visited.isEmpty()) {
+            Commit c = visited.remove();
+            allCurPrev.add(c.getHash());
+            if (c.prev() != null && !allCurPrev.contains(c.prev())) {
+                visited.add(Commit.readCommit(c.prev()));
+            }
+            if (c.getSecPrev() != null && !allCurPrev.contains(c.getSecPrev())) {
+                visited.add(Commit.readCommit(c.getSecPrev()));
+            }
         }
-        spiltPoint = getCurCommit(curBranch);
-        while (!t.contains(spiltPoint.getHash())) {
-            spiltPoint = Commit.readCommit(spiltPoint.prev());
+        Commit c = tar;
+        while (!allCurPrev.contains(c.getHash())) {
+            tarPrev.add(c.getHash());
+            if (c.prev() != null && !tarPrev.contains(c.prev())) {
+                visited.add(Commit.readCommit(c.prev()));
+            }
+            if (c.getSecPrev() != null && !tarPrev.contains(c.getSecPrev())) {
+                visited.add(Commit.readCommit(c.getSecPrev()));
+            }
+            c = visited.remove();
         }
-        return spiltPoint;
+        return c;
     }
-    private static void mergeHelper(TreeMap<String, String> toWrite, TreeSet<String> toDelete
-            , TreeMap<String, String> conflict, String curBranch) {
+    private static void mergeHelper(TreeMap<String, String> toWrite, TreeSet<String> toDelete,
+                                    TreeMap<String, String> conflict, String curBranch) {
         for (String i : toWrite.keySet()) {
             writeContents(join(CWD, i), readContents(join(BLOBS, toWrite.get(i))));
             addCommand(curBranch, i);

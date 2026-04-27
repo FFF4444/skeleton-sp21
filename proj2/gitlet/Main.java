@@ -53,28 +53,7 @@ public class Main {
                 break;
             case "checkout":
                 initCheck(args);
-                switch (args.length) {
-                    case 3:
-                        if (!args[1].equals("--")) {
-                            System.out.println("Incorrect operands.");
-                            System.exit(0);
-                        }
-                        checkoutCommandFile(args[2], getCurBranch());
-                        break;
-                    case 4:
-                        if (!args[2].equals("--")) {
-                            System.out.println("Incorrect operands.");
-                            System.exit(0);
-                        }
-                        checkoutCommand(args[1], args[3]);
-                        break;
-                    case 2:
-                        checkoutCommandBranch(args[1], getCurBranch());
-                        break;
-                    default:
-                        System.out.println("Incorrect operands.");
-                        System.exit(0);
-                }
+                checkoutHelper(args);
                 break;
             case "branch":
                 check(args, 2);
@@ -100,5 +79,29 @@ public class Main {
 
     public static String getCurBranch() {
         return Utils.readContentsAsString(Utils.join(Repository.HEADS, "curBranch"));
+    }
+    private static void checkoutHelper(String[] args) {
+        switch (args.length) {
+            case 3:
+                if (!args[1].equals("--")) {
+                    System.out.println("Incorrect operands.");
+                    System.exit(0);
+                }
+                checkoutCommandFile(args[2], getCurBranch());
+                break;
+            case 4:
+                if (!args[2].equals("--")) {
+                    System.out.println("Incorrect operands.");
+                    System.exit(0);
+                }
+                checkoutCommand(args[1], args[3]);
+                break;
+            case 2:
+                checkoutCommandBranch(args[1], getCurBranch());
+                break;
+            default:
+                System.out.println("Incorrect operands.");
+                System.exit(0);
+        }
     }
 }

@@ -105,6 +105,9 @@ public class Commit implements Serializable {
     public String prev() {
         return prev;
     }
+    public String getSecPrev() {
+        return secPrev;
+    }
     public String getMessage() {
         return message;
     }
