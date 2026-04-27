@@ -396,15 +396,17 @@ public class Repository {
                     toDelete.add(i);
                 }
             } else if (!spiltPoint.getBlob().get(i).equals(tar.getBlob().get(i))) {
-                String curStr = readContentsAsString(join(BLOBS, cur.getBlob().get(i)));
-                String tarStr = readContentsAsString(join(BLOBS, tar.getBlob().get(i)));
                 if (cur.getBlob().containsKey(i) && tar.getBlob().containsKey(i)) {
+                    String curStr = readContentsAsString(join(BLOBS, cur.getBlob().get(i)));
+                    String tarStr = readContentsAsString(join(BLOBS, tar.getBlob().get(i)));
                     String result = "<<<<<<< HEAD\n" + curStr + "=======\n" + tarStr + ">>>>>>>\n";
                     conflict.put(i, result);
                 } else if (!cur.getBlob().containsKey(i) && tar.getBlob().containsKey(i)) {
+                    String tarStr = readContentsAsString(join(BLOBS, tar.getBlob().get(i)));
                     String result = "<<<<<<< HEAD\n" + "=======\n" + tarStr + ">>>>>>>\n";
                     conflict.put(i, result);
                 } else if (cur.getBlob().containsKey(i) && !tar.getBlob().containsKey(i)) {
+                    String curStr = readContentsAsString(join(BLOBS, cur.getBlob().get(i)));
                     String result = "<<<<<<< HEAD\n" + curStr + "=======\n" + ">>>>>>>\n";
                     conflict.put(i, result);
                 }
