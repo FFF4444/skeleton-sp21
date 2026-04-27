@@ -36,7 +36,7 @@ public class Commit implements Serializable {
         this.message = message;
         timeStamp = new Date();
         this.prev = prev;
-        TreeMap<String, String> prevTree = readCommit(prev).getBlob();
+        TreeMap<String, String> prevTree = readCommit(prev, Repository.COMMITS).getBlob();
         blob = new TreeMap<>(prevTree);
     }
     public Commit(String message, String prev, String scePrev) {
@@ -44,14 +44,14 @@ public class Commit implements Serializable {
         timeStamp = new Date();
         this.prev = prev;
         this.secPrev = scePrev;
-        blob = new TreeMap<>(readCommit(prev).getBlob());
+        blob = new TreeMap<>(readCommit(prev, Repository.COMMITS).getBlob());
     }
 
-    public static Commit readCommit(String hash) {
+    public static Commit readCommit(String hash, File commit) {
         if (hash == null) {
             return null;
         }
-        File c = join(Repository.COMMITS, hash);
+        File c = join(commit, hash);
         if (c.exists()) {
             return readObject(c, Commit.class);
         }

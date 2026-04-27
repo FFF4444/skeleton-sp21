@@ -71,6 +71,30 @@ public class Main {
                 check(args, 2);
                 mergeCommand(args[1], getCurBranch());
                 break;
+            case "add-remote":
+                check(args, 3);
+                if (!args[2].endsWith("/.gitlet")) {
+                    System.out.println("Incorrect operands.");
+                    System.exit(0);
+                }
+                addRemoteCommand(args[1], args[2]);
+                break;
+            case "rm-remote":
+                check(args, 2);
+                rmRemoteCommand(args[1]);
+                break;
+            case "push":
+                check(args, 3);
+                pushCommand(args[1], args[2], getCurBranch());
+                break;
+            case "fetch":
+                check(args, 3);
+                fetchCommand(args[1], args[2]);
+                break;
+            case "pull":
+                check(args, 3);
+                pullCommand(args[1], args[2], getCurBranch());
+                break;
             default:
                 System.out.println("No command with that name exists.");
                 System.exit(0);

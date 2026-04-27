@@ -34,6 +34,7 @@ public class Repository {
     public static final File ADD = join(STAGE, "add");
     public static final File RM = join(STAGE, "remove");
     public static final File CURBRANCH = join(Repository.HEADS, "curBranch");
+    public static final File REMOTE = join(GITLET_DIR, "remote");
 
     private static void setUp() {
         GITLET_DIR.mkdir();
@@ -45,6 +46,7 @@ public class Repository {
         TreeSet<String> rm = new TreeSet<>();
         writeObject(ADD, add);
         writeObject(RM, rm);
+        writeObject(REMOTE, add);
     }
 
     public static void initCommand() {
@@ -69,7 +71,7 @@ public class Repository {
             System.out.println("File does not exist.");
             return;
         }
-        Commit curCommit = getCurCommit(curBranch);
+        Commit curCommit = getCurCommit(curBranch, GITLET_DIR);
         byte[] file = readContents(join(CWD, name));
         @SuppressWarnings("unchecked")
         TreeMap<String, String> add = readObject(ADD, TreeMap.class);
@@ -86,9 +88,9 @@ public class Repository {
         addBlobs(file);
     }
 
-    public static Commit getCurCommit(String curBranch) {
-        File ch = join(HEADS, curBranch);
-        return Commit.readCommit(readContentsAsString(ch));
+    public static Commit getCurCommit(String curBranch, File gitdir) {
+        File ch = join(join(gitdir, "heads"), curBranch);
+        return Commit.readCommit(readContentsAsString(ch), join(gitdir, "commits"));
     }
 
     public static void addBlobs(Serializable file) {
@@ -111,10 +113,11 @@ public class Repository {
         }
         Commit cur;
         if (secBranch == null) {
-            cur = new Commit(message, getCurCommit(curBranch).getHash());
+            cur = new Commit(message, getCurCommit(curBranch, GITLET_DIR).getHash());
         } else {
             cur = new Commit(message,
-                    getCurCommit(curBranch).getHash(), getCurCommit(secBranch).getHash());
+                    getCurCommit(curBranch, GITLET_DIR).getHash(),
+                    getCurCommit(secBranch, GITLET_DIR).getHash());
         }
         cur.add(add);
         cur.rm(rm);
@@ -130,7 +133,7 @@ public class Repository {
     public static void rmCommand(String name, String curBranch) {
         @SuppressWarnings("unchecked")
         TreeMap<String, String> add = readObject(ADD, TreeMap.class);
-        Commit cur = getCurCommit(curBranch);
+        Commit cur = getCurCommit(curBranch, GITLET_DIR);
         if (!cur.getBlob().containsKey(name) && !add.containsKey(name)) {
             System.out.println("No reason to remove the file.");
             System.exit(0);
@@ -150,17 +153,17 @@ public class Repository {
     }
 
     public static void logCommand(String curBranch) {
-        Commit cur = getCurCommit(curBranch);
+        Commit cur = getCurCommit(curBranch, GITLET_DIR);
         while (cur != null) {
             cur.printCommit();
-            cur = Commit.readCommit(cur.prev());
+            cur = Commit.readCommit(cur.prev(), COMMITS);
         }
     }
 
     public static void globallogCommand() {
         List<String> commits = plainFilenamesIn(COMMITS);
         for (String c : commits) {
-            Commit cur = Commit.readCommit(c);
+            Commit cur = Commit.readCommit(c, COMMITS);
             cur.printCommit();
         }
     }
@@ -169,7 +172,7 @@ public class Repository {
         List<String> commits = plainFilenamesIn(COMMITS);
         boolean flag = false;
         for (String c : commits) {
-            Commit cur = Commit.readCommit(c);
+            Commit cur = Commit.readCommit(c, COMMITS);
             if (cur.getMessage().equals(message)) {
                 System.out.println(cur.getHash());
                 flag = true;
@@ -184,7 +187,7 @@ public class Repository {
     public static void statusCommand(String curBranch) {
         List<String> branches = plainFilenamesIn(HEADS);
         List<String> cwd = plainFilenamesIn(CWD);
-        Commit c = getCurCommit(curBranch);
+        Commit c = getCurCommit(curBranch, GITLET_DIR);
         TreeMap<String, String> blobs = c.getBlob();
         @SuppressWarnings("unchecked")
         TreeMap<String, String> add = readObject(ADD, TreeMap.class);
@@ -257,14 +260,14 @@ public class Repository {
     }
 
     public static void checkoutCommandFile(String name, String curBranch) {
-        Commit c = getCurCommit(curBranch);
+        Commit c = getCurCommit(curBranch, GITLET_DIR);
         checkoutHelper(name, c);
     }
 
     public static void checkoutCommand(String commitID, String name) {
         String totalID = Commit.commitExist(commitID);
         if (totalID != null) {
-            checkoutHelper(name, Commit.readCommit(totalID));
+            checkoutHelper(name, Commit.readCommit(totalID, COMMITS));
         } else {
             System.out.println("No commit with that id exists.");
         }
@@ -279,15 +282,21 @@ public class Repository {
             System.out.println("No need to checkout the current branch.");
             System.exit(0);
         }
-        resetHelper(getCurCommit(curBranch), getCurCommit(branch));
+        resetHelper(getCurCommit(curBranch, GITLET_DIR), getCurCommit(branch, GITLET_DIR), CWD);
+        stageClear();
         writeContents(CURBRANCH, branch);
     }
 
-    private static void resetHelper(Commit cur, Commit target) {
-        TreeMap<String, String> curBlobs = cur.getBlob();
+    private static void resetHelper(Commit cur, Commit target, File cwd) {
+        TreeMap<String, String> curBlobs;
+        if (cur != null) {
+            curBlobs = cur.getBlob();
+        } else {
+            curBlobs = new TreeMap<>();
+        }
         TreeMap<String, String> tarBlobs = target.getBlob();
         for (String i : tarBlobs.keySet()) {
-            File f = join(CWD, i);
+            File f = join(cwd, i);
             if (f.exists() && (!curBlobs.containsKey(i) || !getHash(f).equals(curBlobs.get(i)))) {
                 System.out.println("There is an untracked file in the way"
                         + "; delete it, or add and commit it first.");
@@ -295,7 +304,7 @@ public class Repository {
             }
         }
         for (String i : curBlobs.keySet()) {
-            File f = join(CWD, i);
+            File f = join(cwd, i);
             if (!tarBlobs.containsKey(i) && !curBlobs.get(i).equals(getHash(f))) {
                 System.out.println("There is an untracked file"
                         + " in the way; delete it, or add and commit it first.");
@@ -303,17 +312,19 @@ public class Repository {
             }
         }
         for (String i : tarBlobs.keySet()) {
-            File f = join(CWD, i);
+            File f = join(cwd, i);
             if (!f.exists() || !tarBlobs.get(i).equals(getHash(f))) {
                 writeContents(f, readContents(join(BLOBS, tarBlobs.get(i))));
             }
         }
         for (String i : curBlobs.keySet()) {
-            File f = join(CWD, i);
+            File f = join(cwd, i);
             if (!tarBlobs.containsKey(i)) {
                 restrictedDelete(f);
             }
         }
+    }
+    private static void stageClear() {
         TreeMap<String, String> add = new TreeMap<>();
         TreeSet<String> rm = new TreeSet<>();
         writeObject(ADD, add);
@@ -350,8 +361,9 @@ public class Repository {
             System.out.println("No commit with that id exists.");
             System.exit(0);
         }
-        resetHelper(Commit.readCommit(readContentsAsString(join(HEADS, curBranch))),
-                Commit.readCommit(Commit.commitExist(id)));
+        resetHelper(Commit.readCommit(readContentsAsString(join(HEADS, curBranch)), COMMITS),
+                Commit.readCommit(Commit.commitExist(id), COMMITS), CWD);
+        stageClear();
         writeContents(join(HEADS, curBranch), Commit.commitExist(id));
     }
     public static void validateNumArgs(String[] args, int n) {
@@ -377,8 +389,8 @@ public class Repository {
         TreeSet<String> toDelete = new TreeSet<>();
         TreeMap<String, String> conflict = new TreeMap<>();
         Commit spiltPoint = searchSplitPoint(target, curBranch);
-        Commit tar = getCurCommit(target);
-        Commit cur = getCurCommit(curBranch);
+        Commit tar = getCurCommit(target, GITLET_DIR);
+        Commit cur = getCurCommit(curBranch, GITLET_DIR);
         if (spiltPoint.getHash().equals(tar.getHash())) {
             System.out.println("Given branch is an ancestor of the current branch.");
             return;
@@ -464,33 +476,38 @@ public class Repository {
     }
     private static Commit searchSplitPoint(String target, String curBranch) {
         Queue<Commit> visited = new ArrayDeque<>();
-        Commit tar = getCurCommit(target);
-        Commit cur = getCurCommit(curBranch);
-        TreeSet<String> allCurPrev = new TreeSet<>();
+        Commit tar = getCurCommit(target, GITLET_DIR);
+        Commit cur = getCurCommit(curBranch, GITLET_DIR);
+        TreeSet<String> allCurPrev = searchPrev(cur, COMMITS);
         TreeSet<String> tarPrev = new TreeSet<>();
-        visited.add(cur);
-        while (!visited.isEmpty()) {
-            Commit c = visited.remove();
-            allCurPrev.add(c.getHash());
-            if (c.prev() != null && !allCurPrev.contains(c.prev())) {
-                visited.add(Commit.readCommit(c.prev()));
-            }
-            if (c.getSecPrev() != null && !allCurPrev.contains(c.getSecPrev())) {
-                visited.add(Commit.readCommit(c.getSecPrev()));
-            }
-        }
         Commit c = tar;
         while (!allCurPrev.contains(c.getHash())) {
             tarPrev.add(c.getHash());
             if (c.prev() != null && !tarPrev.contains(c.prev())) {
-                visited.add(Commit.readCommit(c.prev()));
+                visited.add(Commit.readCommit(c.prev(), COMMITS));
             }
             if (c.getSecPrev() != null && !tarPrev.contains(c.getSecPrev())) {
-                visited.add(Commit.readCommit(c.getSecPrev()));
+                visited.add(Commit.readCommit(c.getSecPrev(), COMMITS));
             }
             c = visited.remove();
         }
         return c;
+    }
+    private static TreeSet<String> searchPrev(Commit cur, File commit) {
+        Queue<Commit> visited = new ArrayDeque<>();
+        visited.add(cur);
+        TreeSet<String> allCurPrev = new TreeSet<>();
+        while (!visited.isEmpty()) {
+            Commit c = visited.remove();
+            allCurPrev.add(c.getHash());
+            if (c.prev() != null && !allCurPrev.contains(c.prev())) {
+                visited.add(Commit.readCommit(c.prev(), commit));
+            }
+            if (c.getSecPrev() != null && !allCurPrev.contains(c.getSecPrev())) {
+                visited.add(Commit.readCommit(c.getSecPrev(), commit));
+            }
+        }
+        return  allCurPrev;
     }
     private static void mergeHelper(TreeMap<String, String> toWrite, TreeSet<String> toDelete,
                                     TreeMap<String, String> conflict, String curBranch) {
@@ -508,5 +525,104 @@ public class Repository {
         if (!conflict.isEmpty()) {
             System.out.println("Encountered a merge conflict.");
         }
+    }
+
+    public static void addRemoteCommand(String name, String dir) {
+        @SuppressWarnings("unchecked")
+        TreeMap<String, String> remote = readObject(REMOTE, TreeMap.class);
+        if (remote.containsKey(name)) {
+            System.out.println("A remote with that name already exists.");
+            System.exit(0);
+        }
+        remote.put(name, dir.replace('/', File.separatorChar));
+        writeObject(REMOTE, remote);
+    }
+
+    public static void  rmRemoteCommand(String name) {
+        @SuppressWarnings("unchecked")
+        TreeMap<String, String> remote = readObject(REMOTE, TreeMap.class);
+        if (!remote.containsKey(name)) {
+            System.out.println("A remote with that name does not exist.");
+            System.exit(0);
+        }
+        remote.remove(name);
+        writeObject(REMOTE, remote);
+    }
+    public static void pushCommand(String remoteRep, String remoteBranch, String curBranch) {
+        Commit cur = getCurCommit(curBranch, GITLET_DIR);
+        TreeSet<String> curPrev = searchPrev(cur, COMMITS);
+        @SuppressWarnings("unchecked")
+        TreeMap<String, String> remote = readObject(REMOTE, TreeMap.class);
+        File rs = new File(remote.get(remoteRep));
+        Commit remo = getRemoteCommit(remoteRep, remoteBranch);
+        if (remo != null) {
+            if (!curPrev.contains(remo.getHash())) {
+                System.out.println("Please pull down remote changes before pushing.");
+                System.exit(0);
+            }
+            TreeSet<String> remoPrev = searchPrev(remo, COMMITS);
+            curPrev.removeAll(remoPrev);
+        }
+        for (String i : curPrev) {
+            Commit c = Commit.readCommit(i, COMMITS);
+            TreeMap<String, String> t = c.getBlob();
+            for (String j : t.values()) {
+                File f = join(join(rs, "blobs"), j);
+                if (!f.exists()) {
+                    writeContents(f, readContents(join(BLOBS, j)));
+                }
+            }
+            writeObject(join(join(rs, "commits"), i), c);
+        }
+        writeContents(join(join(rs, "heads"), remoteBranch), cur.getHash());
+    }
+    public static void fetchCommand(String remoteRep, String branch) {
+        Commit remo = getRemoteCommit(remoteRep, branch);
+        if (remo == null) {
+            System.out.println("That remote does not have that branch.");
+            System.exit(0);
+        }
+        @SuppressWarnings("unchecked")
+        TreeMap<String, String> remote = readObject(REMOTE, TreeMap.class);
+        File rs = new File(remote.get(remoteRep));
+        TreeSet<String> remoPrev = searchPrev(remo, join(rs, "commits"));
+        for (String i : remoPrev) {
+            Commit c = Commit.readCommit(i, join(rs, "commits"));
+            TreeMap<String, String> t = c.getBlob();
+            for (String j : t.values()) {
+                File f = join(BLOBS, j);
+                if (!f.exists()) {
+                    writeContents(f, readContents(join(join(rs, "blobs"), j)));
+                }
+            }
+            writeObject(join(COMMITS, i), c);
+        }
+        File file = new File(HEADS, remoteRep);
+        if (!file.exists()){
+            file.mkdir();
+        }
+        writeContents(join(file, branch), remo.getHash());
+    }
+    private static Commit getRemoteCommit(String remoteRep, String remoteBranch) {
+        @SuppressWarnings("unchecked")
+        TreeMap<String, String> remote = readObject(REMOTE, TreeMap.class);
+        if (!remote.containsKey(remoteRep)) {
+            System.out.println("Remote directory not found.");
+            System.exit(0);
+        }
+        File rs = new File(remote.get(remoteRep));
+        if (!rs.exists()) {
+            System.out.println("Remote directory not found.");
+            System.exit(0);
+        }
+        File b = join(join(rs, "heads"), remoteBranch);
+        if (b.exists()) {
+            return getCurCommit(remoteBranch, rs);
+        }
+        return null;
+    }
+    public static void pullCommand(String name, String branch, String curBranch) {
+        fetchCommand(name, branch);
+        mergeCommand(name + "/" + branch, curBranch);
     }
 }
