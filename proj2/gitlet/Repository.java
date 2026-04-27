@@ -598,7 +598,7 @@ public class Repository {
             writeObject(join(COMMITS, i), c);
         }
         File file = new File(HEADS, remoteRep);
-        if (!file.exists()){
+        if (!file.exists()) {
             file.mkdir();
         }
         writeContents(join(file, branch), remo.getHash());

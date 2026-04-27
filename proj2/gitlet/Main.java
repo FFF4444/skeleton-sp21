@@ -1,8 +1,6 @@
 package gitlet;
 
-import edu.princeton.cs.algs4.ST;
 import static gitlet.Repository.*;
-import java.io.File;
 
 /** Driver class for Gitlet, a subset of the Git version-control system.
  *  @author lhs
