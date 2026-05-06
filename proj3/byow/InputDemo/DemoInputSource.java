@@ -11,7 +11,7 @@ public class DemoInputSource {
     private static final int STRING = 2;
 
     public static void main(String[] args) {
-        int inputType = KEYBOARD;
+        int inputType = STRING;
 
         InputSource inputSource;
 
@@ -20,7 +20,7 @@ public class DemoInputSource {
         } else if (inputType == RANDOM) {
             inputSource = new RandomInputSource(50L);
         } else { // inputType == STRING
-            inputSource = new StringInputDevice("HELLO MY FRIEND. QUACK QUACK");
+            inputSource = new StringInputDevice("HELLO MY FRIEND. ");
         }
 
         int totalCharacters = 0;

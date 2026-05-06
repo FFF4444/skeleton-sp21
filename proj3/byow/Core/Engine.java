@@ -2,17 +2,27 @@ package byow.Core;
 
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
+import byow.TileEngine.Tileset;
 
-public class Engine {
+import java.io.Serializable;
+
+public class Engine implements Serializable {
     TERenderer ter = new TERenderer();
     /* Feel free to change the width and height. */
     public static final int WIDTH = 80;
     public static final int HEIGHT = 30;
-
+    private long seed;
+    private TETile[][] world;
+    private transient WorldGenerator WG;
     /**
      * Method used for exploring a fresh world. This method should handle all inputs,
      * including inputs from the main menu.
      */
+    public Engine() {;
+        world = new TETile[WIDTH][HEIGHT];
+        ter.initialize(WIDTH, HEIGHT);
+    }
+
     public void interactWithKeyboard() {
     }
 
@@ -45,8 +55,8 @@ public class Engine {
         //
         // See proj3.byow.InputDemo for a demo of how you can make a nice clean interface
         // that works for many different input types.
-
-        TETile[][] finalWorldFrame = null;
-        return finalWorldFrame;
+        WG = new WorldGenerator(world, Long.parseLong(input));
+        WG.createWorld();
+        return world;
     }
 }
