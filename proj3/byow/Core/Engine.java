@@ -1,29 +1,43 @@
 package byow.Core;
 
+import byow.InputDemo.StringInputDevice;
+import byow.InputDemo.KeyboardInputSource;
 import byow.InputDemo.InputSource;
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
 import byow.TileEngine.Tileset;
+import edu.princeton.cs.introcs.StdDraw;
+import java.io.*;
 
-import java.io.Serializable;
 
 public class Engine implements Serializable {
-    TERenderer ter = new TERenderer();
+    private transient TERenderer ter = new TERenderer();
     /* Feel free to change the width and height. */
     public static final int WIDTH = 80;
     public static final int HEIGHT = 30;
     private long seed;
-    private TETile[][] world;
+    private transient TETile[][] world;
     private transient WorldGenerator WG;
+    private boolean init = false;
+    private int playerX;
+    private int playerY;
+    private transient TETile playerTile = Tileset.AVATAR;
+    private transient Menu menu;
+    public static final File CWD = new File(System.getProperty("user.dir"));
+    public static final File SAVE = Utils.join(CWD, "savefile.txt");
     /**
      * Method used for exploring a fresh world. This method should handle all inputs,
      * including inputs from the main menu.
      */
     public Engine() {;
         world = new TETile[WIDTH][HEIGHT];
+        menu = new Menu(WIDTH, HEIGHT);
     }
 
-    public void interactWithKeyboard() {
+    public void interactWithKeyboard() throws IOException {
+        KeyboardInputSource inputDevice = new KeyboardInputSource();
+        menu.drawMenu();
+        interactWithInput(inputDevice, true);
     }
 
     /**
@@ -47,7 +61,7 @@ public class Engine implements Serializable {
      * @param input the input string to feed to your program
      * @return the 2D TETile[][] representing the state of the world
      */
-    public TETile[][] interactWithInputString(String input) {
+    public TETile[][] interactWithInputString(String input) throws IOException {
         // TODO: Fill out this method so that it run the engine using the input
         // passed in as an argument, and return a 2D tile representation of the
         // world that would have been drawn if the same inputs had been given
@@ -56,40 +70,89 @@ public class Engine implements Serializable {
         // See proj3.byow.InputDemo for a demo of how you can make a nice clean interface
         // that works for many different input types.
         StringInputDevice inputDevice = new StringInputDevice(input);
-        StringBuilder stringBuilder;
-        while (inputDevice.possibleNextInput()) {
-            char c = inputDevice.getNextKey();
-            if (c == 'n' || c == 'N') {
-                stringBuilder = new StringBuilder();
-                c = inputDevice.getNextKey();
-                while (c != 's' && c != 'S') {
-                    stringBuilder.append(c);
-                    c = inputDevice.getNextKey();
-                }
-                seed = Long.parseLong(String.valueOf(stringBuilder));
-            }
-        }
-        WG = new WorldGenerator(world, seed);
-        WG.createWorld();
+        interactWithInput(inputDevice, false);
         return world;
     }
-    private static class StringInputDevice {
-        private String input;
-        private int index;
 
-        public StringInputDevice(String s) {
-            index = 0;
-            input = s;
+    public void interactWithInput(InputSource inputSource,boolean isKey) throws IOException {
+        StringBuilder stringBuilder;
+        while (inputSource.possibleNextInput()) {
+            char c = Character.toLowerCase(inputSource.getNextKey());
+            if (!init && c == 'n') {
+                menu.printSeed();
+                stringBuilder = new StringBuilder();
+                c = Character.toLowerCase(inputSource.getNextKey());
+                while (c != 's') {
+                    if (Character.isDigit(c)) {
+                        stringBuilder.append(c);
+                        menu.printSeed(String.valueOf(stringBuilder));
+                    }
+                    c = Character.toLowerCase(inputSource.getNextKey());
+                }
+                seed = Long.parseLong(String.valueOf(stringBuilder));
+                init = true;
+                WG = new WorldGenerator(world, seed);
+                WG.createWorld();
+                swapnPlayer();
+            }
+            if (c == 'w' && init && WG.canMove(playerX, playerY + 1)) {
+                playerY++;
+            }
+            if (c == 'a' && init && WG.canMove(playerX - 1, playerY)) {
+                playerX--;
+            }
+            if (c == 's' && init && WG.canMove(playerX, playerY - 1)) {
+                playerY--;
+            }
+            if (c == 'd' && init && WG.canMove(playerX + 1, playerY)) {
+                playerX++;
+            }
+            if (c == 'q' && !init) {
+               System.exit(0);
+            }
+            if (c == ':' && init) {
+                c = Character.toLowerCase(inputSource.getNextKey());
+                if (c == 'q') {
+                    Utils.writeObject(SAVE, this);
+                    System.exit(0);
+                }
+            }
+            if (c == 'l' && !init) {
+                load();
+            }
+            if (isKey && init) {
+                render();
+            }
         }
+    }
+    private void render() {
+        TETile ori = world[playerX][playerY];
+        world[playerX][playerY] = playerTile;
+        ter.renderFrame(world);
+        world[playerX][playerY] = ori;
+    }
 
-        public char getNextKey() {
-            char returnChar = input.charAt(index);
-            index += 1;
-            return returnChar;
+    private void swapnPlayer() {
+        for (int i = 0; i < WIDTH; i++) {
+            for (int j = 0; j < HEIGHT; j++) {
+                if (WG.canMove(i, j)) {
+                    playerY = j;
+                    playerX = i;
+                    return;
+                }
+            }
         }
-
-        public boolean possibleNextInput() {
-            return index < input.length();
+    }
+    private void load() {
+        if (!SAVE.exists()) {
+            return;
         }
+        Engine l = Utils.readObject(SAVE, Engine.class);
+        playerY = l.playerY;
+        playerX = l.playerX;
+        seed = l.seed;
+        WG = new WorldGenerator(world, seed);
+        WG.createWorld();
+        init = l.init;
     }
 }

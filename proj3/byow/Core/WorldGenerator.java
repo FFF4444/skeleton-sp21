@@ -52,4 +52,7 @@ public class WorldGenerator {
         root.createHallway(world, FLOOR);
         createWall();
     }
+    public boolean canMove(int x, int y) {
+        return world[x][y] == FLOOR;
+    }
 }
