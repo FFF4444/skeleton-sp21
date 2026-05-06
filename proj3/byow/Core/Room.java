@@ -23,7 +23,8 @@ public class Room {
             }
         }
     }
-    public static void randomConnectRoom(TETile[][] world, Room roomA, Room roomB, Random random, TETile road) {
+    public static void randomConnectRoom(TETile[][] world,
+                                         Room roomA, Room roomB, Random random, TETile road) {
         if (roomA == null || roomB == null) {
             return;
         }

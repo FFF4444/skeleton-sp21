@@ -35,7 +35,7 @@ public class WorldGenerator {
             for (int j = 0; j < height; j++) {
                 if (world[i][j] == Tileset.NOTHING) {
                     for (int[] dir : new int[][]{{-1, 0}, {1, 0}, {0, -1}, {0, 1},
-                            {1, 1}, {1, -1}, {-1, -1}, {-1, 1}}) {
+                        {1, 1}, {1, -1}, {-1, -1}, {-1, 1}}) {
                         int nx = i + dir[0], ny = j + dir[1];
                         if (inBound(nx, ny) && world[nx][ny] == FLOOR) {
                             world[i][j] = WALL;

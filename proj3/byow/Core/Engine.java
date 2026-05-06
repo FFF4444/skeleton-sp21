@@ -6,7 +6,6 @@ import byow.InputDemo.InputSource;
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
 import byow.TileEngine.Tileset;
-import edu.princeton.cs.introcs.StdDraw;
 import java.io.*;
 
 
@@ -108,7 +107,7 @@ public class Engine implements Serializable {
                 playerX++;
             }
             if (c == 'q') {
-                System.exit(0);
+                break;
             }
             if (c == ':' && init) {
                 c = Character.toLowerCase(inputSource.getNextKey());
@@ -118,7 +117,7 @@ public class Engine implements Serializable {
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-                    System.exit(0);
+                    break;
                 }
             }
             if (c == 'l' && !init) {
