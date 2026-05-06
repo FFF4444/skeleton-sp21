@@ -58,7 +58,7 @@ public class Engine implements Serializable {
      * @param input the input string to feed to your program
      * @return the 2D TETile[][] representing the state of the world
      */
-    public TETile[][] interactWithInputString(String input) throws IOException {
+    public TETile[][] interactWithInputString(String input) {
         // passed in as an argument, and return a 2D tile representation of the
         // world that would have been drawn if the same inputs had been given
         // to interactWithKeyboard().
@@ -70,7 +70,7 @@ public class Engine implements Serializable {
         return world;
     }
 
-    public void interactWithInput(InputSource inputSource, boolean isKey) throws IOException {
+    public void interactWithInput(InputSource inputSource, boolean isKey) {
         StringBuilder stringBuilder;
         while (inputSource.possibleNextInput()) {
             char c = Character.toLowerCase(inputSource.getNextKey());
@@ -109,7 +109,11 @@ public class Engine implements Serializable {
             if (c == ':' && init) {
                 c = Character.toLowerCase(inputSource.getNextKey());
                 if (c == 'q') {
-                    Utils.writeObject(SAVE, this);
+                    try {
+                        Utils.writeObject(SAVE, this);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                     System.exit(0);
                 }
             }
