@@ -38,7 +38,7 @@ public class HexWorld {
     private static void halfHexagon(int n, int x, int y, TETile teTile, TETile[][] tiles, int yStep) {
         int i, j;
         for (i = 0; i < n; i++) {
-            for (j = 0; j < 3 * n - 2 -2 * i; j++) {
+            for (j = 0; j < 3 * n - 2 - 2 * i; j++) {
                 tiles[x + j + i][y + i * yStep] = teTile;
             }
         }

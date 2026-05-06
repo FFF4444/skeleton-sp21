@@ -7,8 +7,8 @@ public class WorldGenerator {
     private final TETile WALL = Tileset.WALL;
     private final TETile FLOOR = Tileset.FLOOR;
     private final int MAXDEPTH = 8;
-    public int width;
-    public int height;
+    private int width;
+    private int height;
     private WorldNode root;
     private TETile[][] world;
     private long seed;
@@ -17,10 +17,10 @@ public class WorldGenerator {
         this.seed = seed;
         width = world.length;
         height = world[0].length;
-        initWorld(world);
+        initWorld();
         root = new WorldNode(0, 0, height, width, seed);
     }
-    private void initWorld(TETile[][] world) {
+    private void initWorld() {
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 world[i][j] = Tileset.NOTHING;

@@ -49,7 +49,7 @@ public class Menu implements Serializable {
         StdDraw.setPenColor(Color.white);
         Font font = new Font("Monaco", Font.BOLD, 50);
         StdDraw.setFont(font);
-        StdDraw.text(this.width / 2.0, this.height / 2.0 , "seed :" + seed);
+        StdDraw.text(this.width / 2.0, this.height / 2.0, "seed :" + seed);
         font = new Font("Monaco", Font.BOLD, 20);
         StdDraw.setFont(font);
         StdDraw.show();
