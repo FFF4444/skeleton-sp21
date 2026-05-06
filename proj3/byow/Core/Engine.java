@@ -31,11 +31,11 @@ public class Engine implements Serializable {
      */
     public Engine() {
         world = new TETile[WIDTH][HEIGHT];
-        menu = new Menu(WIDTH, HEIGHT);
     }
 
     public void interactWithKeyboard() throws IOException {
         KeyboardInputSource inputDevice = new KeyboardInputSource();
+        menu = new Menu(WIDTH, HEIGHT);
         menu.drawMenu();
         interactWithInput(inputDevice, true);
     }
