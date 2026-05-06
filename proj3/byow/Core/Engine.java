@@ -75,13 +75,17 @@ public class Engine implements Serializable {
         while (inputSource.possibleNextInput()) {
             char c = Character.toLowerCase(inputSource.getNextKey());
             if (!init && c == 'n') {
-                menu.printSeed();
+                if (menu != null) {
+                    menu.printSeed();
+                }
                 stringBuilder = new StringBuilder();
                 c = Character.toLowerCase(inputSource.getNextKey());
                 while (c != 's') {
                     if (Character.isDigit(c)) {
                         stringBuilder.append(c);
-                        menu.printSeed(String.valueOf(stringBuilder));
+                        if (menu != null) {
+                            menu.printSeed(String.valueOf(stringBuilder));
+                        }
                     }
                     c = Character.toLowerCase(inputSource.getNextKey());
                 }
