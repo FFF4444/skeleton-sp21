@@ -1,5 +1,6 @@
 package byow.Core;
 
+import byow.InputDemo.InputSource;
 import byow.TileEngine.TERenderer;
 import byow.TileEngine.TETile;
 import byow.TileEngine.Tileset;
@@ -20,7 +21,6 @@ public class Engine implements Serializable {
      */
     public Engine() {;
         world = new TETile[WIDTH][HEIGHT];
-        ter.initialize(WIDTH, HEIGHT);
     }
 
     public void interactWithKeyboard() {
@@ -55,8 +55,41 @@ public class Engine implements Serializable {
         //
         // See proj3.byow.InputDemo for a demo of how you can make a nice clean interface
         // that works for many different input types.
-        WG = new WorldGenerator(world, Long.parseLong(input));
+        StringInputDevice inputDevice = new StringInputDevice(input);
+        StringBuilder stringBuilder;
+        while (inputDevice.possibleNextInput()) {
+            char c = inputDevice.getNextKey();
+            if (c == 'n' || c == 'N') {
+                stringBuilder = new StringBuilder();
+                c = inputDevice.getNextKey();
+                while (c != 's' && c != 'S') {
+                    stringBuilder.append(c);
+                    c = inputDevice.getNextKey();
+                }
+                seed = Long.parseLong(String.valueOf(stringBuilder));
+            }
+        }
+        WG = new WorldGenerator(world, seed);
         WG.createWorld();
         return world;
+    }
+    private static class StringInputDevice {
+        private String input;
+        private int index;
+
+        public StringInputDevice(String s) {
+            index = 0;
+            input = s;
+        }
+
+        public char getNextKey() {
+            char returnChar = input.charAt(index);
+            index += 1;
+            return returnChar;
+        }
+
+        public boolean possibleNextInput() {
+            return index < input.length();
+        }
     }
 }
